@@ -131,7 +131,6 @@
             will-change: bottom;
         }
 
-        /* Marcador de altura máxima */
         .altura-max-marker {
             position: absolute;
             left: 40px;
@@ -162,10 +161,12 @@
             border-radius: 28px;
             padding: 24px 20px;
             box-shadow: inset 0 1px 4px #ffffff, 0 10px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
         }
         h3 {
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             color: #0b2545;
             font-weight: 700;
             font-size: 1.9rem;
@@ -179,44 +180,16 @@
             border-radius: 40px;
             text-align: center;
             font-weight: 600;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             font-size: 1.1rem;
             box-shadow: 0 4px 0 #0f1e2e;
         }
-        .card {
-            background: white;
-            padding: 14px 18px;
-            margin-bottom: 16px;
-            border-radius: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
-            border: 1px solid #d9e2ef;
-        }
-        .card small {
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            color: #406e8e;
-        }
-        .value {
-            font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
-            font-size: 2.1rem;
-            font-weight: 700;
-            display: block;
-            margin-top: 6px;
-            color: #0a2540;
-        }
-        .explain {
-            background: #e2f0e8;
-            border-left: 6px solid var(--accent-up);
-            padding: 12px 14px;
-            border-radius: 16px;
-            margin: 20px 0 16px;
-            font-size: 0.95rem;
-        }
+
+        /* BOTONES AHORA ARRIBA, JUSTO DESPUÉS DEL BADGE */
         .btn-group {
             display: flex;
             gap: 12px;
-            margin-top: 8px;
+            margin-bottom: 24px;  /* separa de las tarjetas */
         }
         button {
             flex: 1;
@@ -247,8 +220,39 @@
             box-shadow: 0 4px 0 #1e7e4a;
             cursor: not-allowed;
         }
+
+        .card {
+            background: white;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+            border: 1px solid #d9e2ef;
+        }
+        .card small {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: #406e8e;
+        }
+        .value {
+            font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+            font-size: 2.1rem;
+            font-weight: 700;
+            display: block;
+            margin-top: 6px;
+            color: #0a2540;
+        }
+        .explain {
+            background: #e2f0e8;
+            border-left: 6px solid var(--accent-up);
+            padding: 12px 14px;
+            border-radius: 16px;
+            margin: 10px 0 16px;
+            font-size: 0.95rem;
+        }
         .reference-note {
-            margin-top: 22px;
+            margin-top: 8px;
             background: #fff6df;
             padding: 14px 16px;
             border-radius: 20px;
@@ -278,11 +282,17 @@
         </div>
     </div>
 
-    <!-- PANEL DERECHO -->
+    <!-- PANEL DERECHO (con botones arriba) -->
     <div class="panel">
         <h3>⏫ Tiro vertical</h3>
         <div class="sistema-badge">
             📐 Sistema de referencia: <br> <span style="font-family: monospace;">y = 0 en el suelo</span>
+        </div>
+
+        <!-- BOTONES AQUÍ, ARRIBA Y CÓMODOS -->
+        <div class="btn-group">
+            <button id="lanzarBtn">🚀 LANZAR (v₀ = 40 m/s)</button>
+            <button class="reset-btn" id="resetBtn">⟲ RESET</button>
         </div>
 
         <div class="card" style="border-left: 8px solid #2ecc71;">
@@ -310,17 +320,12 @@
             • ¡La simulación se detiene justo en la cima!
         </div>
 
-        <div class="btn-group">
-            <button id="lanzarBtn">🚀 LANZAR (v₀ = 40 m/s)</button>
-            <button class="reset-btn" id="resetBtn">⟲ RESET</button>
-        </div>
-
         <div class="reference-note">
             <span style="font-size:1.3rem; margin-right:6px;">🧠</span> 
             <strong>¿Y en caída libre?</strong> Si el origen estuviera arriba, y₀ sería la altura inicial e y_final = 0. 
             Aquí el eje está abajo → <strong>tiro vertical: y₀ = 0, y_max > 0.</strong> ¡Compáralo con el dibujo!
         </div>
-        <div style="font-size:0.85rem; text-align:center; margin-top:18px; opacity:0.8;">
+        <div style="font-size:0.85rem; text-align:center; margin-top:14px; opacity:0.8;">
             ⏸️ La animación se detiene automáticamente en la altura máxima.
         </div>
     </div>
@@ -357,16 +362,13 @@
 
         // Actualizar posición visual y datos
         function updateDisplay() {
-            // Posición de la pelota (bottom en px)
             let bottomPx = y * PX_PER_METER;
-            // Limitar para que no se salga del área (por seguridad)
             if (bottomPx > 520 - 40) bottomPx = 520 - 40;
             if (bottomPx < 0) bottomPx = 0;
             ball.style.bottom = bottomPx + 'px';
             
             yDisplay.innerText = y.toFixed(2) + ' m';
             
-            // Actualizar marcador de altura máxima
             if (maxHeightReached > 0.01) {
                 const markerBottom = maxHeightReached * PX_PER_METER;
                 maxHeightMarker.style.display = 'flex';
@@ -377,7 +379,6 @@
             }
         }
 
-        // Función de animación (usando requestAnimationFrame con delta de tiempo)
         let lastTimestamp = null;
         function animationStep(timestamp) {
             if (!animActive) return;
@@ -388,28 +389,20 @@
                 return;
             }
             
-            // Calcular delta tiempo en segundos (limitado para evitar saltos)
-            let delta = (timestamp - lastTimestamp) / 1000; // convertir ms a s
-            if (delta > 0.1) delta = 0.016; // ~60fps si hay pausa larga
+            let delta = (timestamp - lastTimestamp) / 1000;
+            if (delta > 0.1) delta = 0.016;
             
-            // Avanzar tiempo
             t += delta;
-            
-            // Calcular nueva velocidad y posición
             v = V0 + G * t;
             y = V0 * t + 0.5 * G * t * t;
             
-            // Verificar si hemos alcanzado o superado el punto más alto (v ≤ 0)
-            // También podemos usar t >= T_MAX, pero por precisión usamos v.
             if (v <= 0 || t >= T_MAX) {
-                // Ajustar exactamente al punto máximo
                 t = T_MAX;
                 y = Y_MAX_TEORICA;
                 v = 0;
                 maxHeightReached = y;
                 updateDisplay();
                 
-                // Detener animación
                 animActive = false;
                 lanzarBtn.disabled = false;
                 if (animFrame) {
@@ -420,7 +413,6 @@
                 return;
             }
             
-            // Actualizar altura máxima alcanzada (para el marcador)
             if (y > maxHeightReached) {
                 maxHeightReached = y;
             }
@@ -431,11 +423,9 @@
             animFrame = requestAnimationFrame(animationStep);
         }
 
-        // Iniciar lanzamiento
         function iniciarLanzamiento() {
-            if (animActive) return; // ya está en marcha
+            if (animActive) return;
             
-            // Resetear estado (pero sin tocar la posición visual todavía)
             t = 0.0;
             y = 0.0;
             v = V0;
@@ -443,22 +433,15 @@
             animActive = true;
             lastTimestamp = null;
             
-            // Deshabilitar botón de lanzar mientras corre
             lanzarBtn.disabled = true;
-            
-            // Ocultar marcador previo
             maxHeightMarker.style.display = 'none';
             
-            // Posicionar pelota en origen
             updateDisplay();
             
-            // Iniciar loop de animación
             animFrame = requestAnimationFrame(animationStep);
         }
 
-        // Reset completo (detener y volver al suelo)
         function resetear() {
-            // Detener animación si está corriendo
             if (animFrame) {
                 cancelAnimationFrame(animFrame);
                 animFrame = null;
@@ -467,22 +450,18 @@
             lanzarBtn.disabled = false;
             lastTimestamp = null;
             
-            // Valores iniciales
             t = 0.0;
             y = 0.0;
             v = V0;
             maxHeightReached = 0.0;
             
-            // Actualizar display
             updateDisplay();
             maxHeightMarker.style.display = 'none';
         }
 
-        // Asignar eventos
         lanzarBtn.addEventListener('click', iniciarLanzamiento);
         resetBtn.addEventListener('click', resetear);
 
-        // Inicializar posición
         resetear();
     })();
 </script>
