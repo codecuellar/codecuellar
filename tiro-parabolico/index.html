@@ -466,17 +466,83 @@ function drawAngleArc(ox, oy, angle_rad, radius=38) {
   ctx.restore();
 }
 
+ // Dibuja una nube simple en (x, y) con tamaño base
+function drawCloud(x, y, size) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.shadowColor = 'rgba(200, 220, 240, 0.5)';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(x, y, size*0.5, 0, Math.PI*2);
+  ctx.arc(x + size*0.6, y - size*0.15, size*0.45, 0, Math.PI*2);
+  ctx.arc(x - size*0.5, y - size*0.1, size*0.4, 0, Math.PI*2);
+  ctx.arc(x + size*0.2, y + size*0.15, size*0.35, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+ 
 // Draw grid + axes
+// Dibuja fondo paisajístico, cuadrícula y ejes
 function drawAxes() {
   const o = getOrigin();
   const W = cvs.width, H = cvs.height;
   const s = getScale();
 
-  ctx.save();
-  ctx.strokeStyle = '#e2e8f0';
-  ctx.lineWidth = 1;
+  // ========== FONDO PAISAJÍSTICO ==========
+  // Cielo degradado
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0, '#b2d9f0');
+  skyGrad.addColorStop(0.7, '#e0f0fa');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, o.y);
 
-  // Compute grid step in meters
+  // Suelo (pasto)
+  ctx.fillStyle = '#5a8c4e';
+  ctx.fillRect(0, o.y, W, H - o.y);
+  // Textura de pasto (líneas finas)
+  ctx.strokeStyle = '#3d6b35';
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < 30; i++) {
+    const px = (i * 37) % W;
+    ctx.beginPath();
+    ctx.moveTo(px, o.y + 2);
+    ctx.lineTo(px - 6, o.y + 12);
+    ctx.lineTo(px + 8, o.y + 18);
+    ctx.stroke();
+  }
+
+  // Montañas al fondo
+  ctx.fillStyle = '#7f9aa5';
+  ctx.beginPath();
+  ctx.moveTo(0, o.y);
+  ctx.lineTo(80, o.y - 45);
+  ctx.lineTo(170, o.y - 20);
+  ctx.lineTo(260, o.y - 55);
+  ctx.lineTo(360, o.y - 10);
+  ctx.lineTo(W, o.y - 30);
+  ctx.lineTo(W, o.y);
+  ctx.fill();
+  ctx.fillStyle = '#9bb7c9';
+  ctx.beginPath();
+  ctx.moveTo(0, o.y);
+  ctx.lineTo(120, o.y - 30);
+  ctx.lineTo(200, o.y - 15);
+  ctx.lineTo(300, o.y - 40);
+  ctx.lineTo(W, o.y - 10);
+  ctx.lineTo(W, o.y);
+  ctx.fill();
+
+  // Nubes (función auxiliar definida abajo)
+  drawCloud(60, 50, 35);
+  drawCloud(W - 100, 80, 45);
+  drawCloud(W/2, 35, 30);
+
+  // ========== CUADRÍCULA Y EJES (original) ==========
+  ctx.save();
+  ctx.strokeStyle = '#a0b3c9';
+  ctx.lineWidth = 0.8;
+
   const pixPerUnit = s;
   const niceSteps = [1,2,5,10,20,25,50,100,200];
   let step = 5;
@@ -484,46 +550,43 @@ function drawAxes() {
     if (ns * pixPerUnit >= 50) { step = ns; break; }
   }
 
-  // Vertical grid lines
+  // Líneas verticales
   for (let xi = 0; o.x + xi * s < W * 0.97; xi += step) {
     const cx = o.x + xi * s;
     ctx.beginPath(); ctx.moveTo(cx, 20); ctx.lineTo(cx, o.y); ctx.stroke();
     if (xi > 0) {
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = '#2c3e50';
       ctx.font = '10px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(xi + 'm', cx, o.y + 14);
     }
   }
 
-  // Horizontal grid lines
+  // Líneas horizontales
   for (let yi = step; o.y - yi * s > 20; yi += step) {
     const cy = o.y - yi * s;
     ctx.beginPath(); ctx.moveTo(o.x, cy); ctx.lineTo(W * 0.97, cy); ctx.stroke();
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = '#2c3e50';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(yi + 'm', o.x - 6, cy + 4);
   }
 
-  // Axes
-  ctx.strokeStyle = '#64748b';
-  ctx.lineWidth = 1.8;
-  // X axis
-  drawArrow(o.x, o.y, W * 0.96, o.y, '#64748b', 1.8);
-  ctx.fillStyle = '#64748b';
+  // Ejes principales
+  ctx.strokeStyle = '#1e3a5f';
+  ctx.lineWidth = 2;
+  drawArrow(o.x, o.y, W * 0.96, o.y, '#1e3a5f', 2);
+  ctx.fillStyle = '#1e3a5f';
   ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('x (m)', W * 0.96, o.y + 22);
 
-  // Y axis
-  drawArrow(o.x, o.y, o.x, 22, '#64748b', 1.8);
+  drawArrow(o.x, o.y, o.x, 22, '#1e3a5f', 2);
   ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('y (m)', o.x + 8, 18);
 
-  // Origin label
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = '#1e3a5f';
   ctx.font = '11px sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText('O', o.x - 5, o.y + 14);
@@ -626,15 +689,40 @@ function drawVelocityVectors(cx, cy, Vx, Vy, scale) {
 }
 
 // Draw ball
+// Dibuja una pelota con volumen (gradiente y sombra)
 function drawBall(cx, cy) {
   ctx.save();
+  // Sombra exterior
+  ctx.shadowColor = '#00000040';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 3;
+
+  // Gradiente radial para efecto 3D
+  const gradient = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, 12);
+  gradient.addColorStop(0, '#f5d742');
+  gradient.addColorStop(0.5, '#e67e22');
+  gradient.addColorStop(1, '#b6490e');
+
   ctx.beginPath();
-  ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-  ctx.fillStyle = '#1a1d2e';
+  ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+  ctx.fillStyle = gradient;
   ctx.fill();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
+
+  // Brillo especular
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.beginPath();
+  ctx.arc(cx-3, cy-3, 3, 0, Math.PI*2);
+  ctx.fillStyle = '#fff9e6';
+  ctx.globalAlpha = 0.5;
+  ctx.fill();
+
+  // Borde
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#c97d0b';
+  ctx.lineWidth = 1.8;
   ctx.stroke();
+
   ctx.restore();
 }
 
