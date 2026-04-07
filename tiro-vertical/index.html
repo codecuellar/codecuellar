@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tiro Vertical - Sistema de Referencia</title>
+    <style>
+        :root { --primary: #2c3e50; --up: #27ae60; --down: #e74c3c; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f2f5; margin: 0; }
+        .container { display: flex; gap: 40px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        .sim-area { 
+            width: 200px; height: 500px; background: #e3f2fd; position: relative; 
+            border-bottom: 4px solid #555; overflow: visible;
+        }
+
+        /* DIBUJO DEL EJE CARTESIANO */
+        .eje-y {
+            position: absolute; left: 40px; top: 20px; bottom: 0;
+            width: 3px; background: var(--primary);
+        }
+        .eje-y::before { /* Flecha del eje */
+            content: ''; position: absolute; top: -10px; left: -4px;
+            border-left: 5px solid transparent; border-right: 5px solid transparent;
+            border-bottom: 10px solid var(--primary);
+        }
+        .y-zero { position: absolute; bottom: -5px; left: -35px; font-weight: bold; color: var(--up); }
+        .y-pos { position: absolute; top: -25px; left: -10px; font-weight: bold; }
+
+        .ball { 
+            width: 30px; height: 30px; background: radial-gradient(circle at 30% 30%, #f39c12, #d35400);
+            border-radius: 50%; position: absolute; left: 100px; bottom: 0; z-index: 10;
+        }
+
+        .panel { width: 300px; }
+        .card { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid var(--primary); }
+        .value { font-family: monospace; font-size: 1.4em; display: block; }
+        button { width: 100%; padding: 12px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; background: var(--up); color: white; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sim-area">
+        <div class="eje-y">
+            <span class="y-zero">y=0</span>
+            <span class="y-pos">+y</span>
+        </div>
+        <div class="ball" id="ball"></div>
+    </div>
+
+    <div class="panel">
+        <h3>Tiro Vertical</h3>
+        <p>Sistema de Referencia: <b>Origen en el suelo.</b></p>
+        
+        <div class="card" style="border-left-color: var(--up)">
+            <small>Posición Inicial ($y_0$)</small>
+            <span class="value">0.00 m</span>
+        </div>
+
+        <div class="card" style="border-left-color: var(--down)">
+            <small>Gravedad ($g$)</small>
+            <span class="value">- 9.81 m/s²</span>
+            <p style="font-size: 0.8em; margin: 5px 0 0;">(Es negativa porque apunta hacia abajo, opuesta al eje +y)</p>
+        </div>
+
+        <div class="card">
+            <small>Altura actual ($y$)</small>
+            <span class="value" id="yDisp">0.00 m</span>
+        </div>
+
+        <button onclick="lanzar()">LANZAR (v₀ = 40m/s)</button>
+        <button onclick="reset()" style="background:#95a5a6">RESET</button>
+    </div>
+</div>
+
+<script>
+    let t = 0, y = 0, v = 40, v0 = 40, g = -9.81;
+    let anim;
+
+    function lanzar() {
+        if(t > 0) reset();
+        anim = setInterval(() => {
+            t += 0.05;
+            v = v0 + (g * t);
+            y = (v0 * t) + (0.5 * g * t * t);
+            
+            if(y <= 0) { y = 0; clearInterval(anim); }
+            
+            document.getElementById('yDisp').innerText = y.toFixed(2);
+            document.getElementById('ball').style.bottom = (y * 4) + "px"; // Escala visual
+        }, 20);
+    }
+
+    function reset() {
+        clearInterval(anim);
+        t = 0; y = 0;
+        document.getElementById('yDisp').innerText = "0.00";
+        document.getElementById('ball').style.bottom = "0px";
+    }
+</script>
+</body>
+</html>
