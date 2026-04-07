@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Caída Libre (MRUV Vertical)</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22; /* Color naranja baloncesto */
+            --bg: #ecf0f1;
+            --panel-bg: #ffffff;
+            --sky-top: #8ed6fb;
+            --sky-bottom: #e0f7fa;
+            --ground: #795548;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: var(--primary);
+        }
+
+        .container { 
+            display: flex; 
+            gap: 40px; 
+            background: var(--panel-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* --- Área de Simulación Estilizada --- */
+        .simulation-viewport {
+            position: relative;
+            width: 350px;
+            height: 600px;
+            display: flex;
+        }
+
+        /* Marcadores de distancia al lado del eje */
+        .distance-markers {
+            width: 50px;
+            height: 100%;
+            position: relative;
+            border-right: 2px solid #bdc3c7;
+            font-size: 0.85em;
+            color: #7f8c8d;
+        }
+
+        .marker {
+            position: absolute;
+            right: 5px;
+            transform: translateY(-50%);
+        }
+        /* Posiciones de los marcadores (ajustar si cambia maxHeightPhys) */
+        .m-0   { top: 0%; }
+        .m-50  { top: 33.33%; }
+        .m-100 { top: 66.66%; }
+        .m-150 { top: 100%; }
+
+        .simulation-area { 
+            flex-grow: 1;
+            height: 100%; 
+            /* Fondo degradado simulando cielo */
+            background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bottom) 80%, var(--ground) 100%);
+            position: relative; 
+            border-radius: 8px; 
+            overflow: hidden; /* Para que la pelota no salga del cuadro */
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        /* Suelo texturizado */
+        .ground { 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            height: 20px; 
+            background-color: var(--ground); 
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36z8gAFkNfwxhgzPUVEOZ89w8AfsEQE57M6pIAAAAASUVORK5CYII='); /* Textura sutil de puntos */
+            border-radius: 0 0 8px 8px;
+            z-index: 2;
+        }
+
+        /* Pelota de baloncesto estilizada con degradado 3D */
+        .ball { 
+            width: 35px; 
+            height: 35px; 
+            background-color: var(--accent);
+            /* Degradado radial para efecto 3D y líneas de baloncesto sutiles */
+            background-image: 
+                radial-gradient(circle at 30% 30%, #ffad60 0%, #e67e22 50%, #b8651c 100%),
+                linear-gradient(to bottom, transparent 48%, #333 50%, transparent 52%),
+                linear-gradient(to right, transparent 48%, #333 50%, transparent 52%);
+            background-size: cover, 100% 100%, 100% 100%;
+            background-blend-mode: normal, overlay, overlay;
+            border-radius: 50%; 
+            position: absolute; 
+            left: calc(50% - 17.5px); /* Centrado horizontal */
+            top: 0px; 
+            z-index: 3;
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+            transform: translateY(0); /* Punto de anclaje arriba */
+        }
+
+        /* Sombra dinámica en el suelo */
+        .shadow {
+            position: absolute;
+            bottom: 15px; /* Justo sobre el suelo */
+            left: calc(50% - 15px);
+            width: 30px;
+            height: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            z-index: 1;
+            transform: scale(1);
+            transition: transform 0.1s linear, background 0.1s linear;
+            filter: blur(2px);
+            opacity: 0; /* Oculta al inicio */
+        }
+
+        /* --- Panel de Control Estilizado --- */
+        .panel { 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+
+        .header-group h2 { margin: 0 0 5px 0; color: var(--primary); }
+        .header-group p { margin: 0 0 25px 0; color: #7f8c8d; font-size: 0.95em; }
+
+        .data-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .data-label {
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .data-value-group {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .data-value {
+            font-weight: 700;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2em;
+            color: var(--primary);
+        }
+
+        .data-unit {
+            font-size: 1.1em;
+            color: #7f8c8d;
+        }
+
+        /* Colores específicos para variables */
+        #time-card { border-left: 5px solid #3498db; }
+        #time-card .data-value { color: #3498db; }
+        #vel-card { border-left: 5px solid #2ecc71; }
+        #vel-card .data-value { color: #2ecc71; }
+        #pos-card { border-left: 5px solid var(--accent); }
+        #pos-card .data-value { color: var(--accent); }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        button { 
+            width: 100%;
+            border: none; 
+            padding: 15px; 
+            font-size: 1.1em; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-start { 
+            background-color: #27ae60; 
+            color: white; 
+        }
+        .btn-start:hover { background-color: #219150; transform: translateY(-2px); }
+        .btn-start:active { transform: translateY(0); }
+
+        .btn-reset {
+            background-color: #e1e8ed;
+            color: var(--primary);
+        }
+        .btn-reset:hover { background-color: #d1d8dd; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="simulation-viewport">
+            <div class="distance-markers">
+                <span class="marker m-0">0 m (y₀)</span>
+                <span class="marker m-50">50 m</span>
+                <span class="marker m-100">100 m</span>
+                <span class="marker m-150">150 m (y_final)</span>
+            </div>
+            <div class="simulation-area" id="simArea">
+                <div class="ball" id="ball"></div>
+                <div class="shadow" id="shadow"></div>
+                <div class="ground"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="header-group">
+                <h2>Caída Libre</h2>
+                <p>Modelo MRUV Vertical (y=0 arriba, g positiva)</p>
+            </div>
+
+            <div class="data-group">
+                <div class="data-card" id="time-card">
+                    <span class="data-label">Tiempo transcurrido (t)</span>
+                    <div class="data-value-group">
+                        <span class="data-value" id="time">0.00</span>
+                        <span class="data-unit">s</span>
+                    </div>
+                </div>
+
+                <div class="data-card" id="pos-card">
+                    <span class="data-label">Posición actual (y) - Distancia bajada</span>
+                    <div class="data-value-group">
+                        <span class="data-value" id="pos">0.00</span>
+                        <span class="data-unit">m</span>
+                    </div>
+                </div>
+
+                <div class="data-card" id="vel-card">
+                    <span class="data-label">Velocidad instantánea (v)</span>
+                    <div class="data-value-group">
+                        <span class="data-value" id="vel">0.00</span>
+                        <span class="data-unit">m/s</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-start" onclick="startSimulation()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Soltar Pelota
+                </button>
+                <button class="btn-reset" onclick="resetSimulation()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.3"/></svg>
+                    Resetear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuración de Física ---
+        const maxHeightPhys = 150; // Altura total del edificio en metros (y final)
+        const g = 9.81;            // Gravedad positiva hacia abajo
+
+        // --- Estado de la Simulación ---
+        let currentY = 0;          // Posición actual (empieza en 0)
+        let currentV = 0;          // Velocidad actual (v0 = 0)
+        let currentT = 0;          // Tiempo actual (t0 = 0)
+        
+        let animationId;
+        let lastTimestamp = 0;
+        let isRunning = false;
+        // Factor de velocidad de simulación (1 = tiempo real, 0.5 = mitad de velocidad para leer datos)
+        const simSpeedFactor = 0.6; 
+
+        // --- Elementos HTML ---
+        const ball = document.getElementById('ball');
+        const shadow = document.getElementById('shadow');
+        const simArea = document.getElementById('simArea');
+        const timeSpan = document.getElementById('time');
+        const posSpan = document.getElementById('pos');
+        const velSpan = document.getElementById('vel');
+
+        // Dimensiones visuales para mapeo física->píxeles
+        const viewportHeight = 600;
+        const ballDiameter = 35;
+        const groundHeight = 20;
+        const maxVisualTop = viewportHeight - groundHeight - ballDiameter; // El punto más bajo de la pelota
+
+        // --- Funciones Principales ---
+
+        // Actualiza la interfaz visual (números y posiciones de gráficos)
+        function updateDisplay() {
+            // 1. Mapeo de posición física (0 a 150) a píxeles CSS (0 a maxVisualTop)
+            const visualTop = (currentY / maxHeightPhys) * maxVisualTop;
+            ball.style.transform = `translateY(${visualTop}px)`;
+
+            // 2. Animación de la sombra (realismo)
+            const groundProximity = currentY / maxHeightPhys; // 0 arriba, 1 suelo
+            if (groundProximity > 0.1) {
+                shadow.style.opacity = groundProximity * 0.8; // Se hace visible
+                // Se encoge y oscurece al acercarse
+                const shadowScale = 1 - (groundProximity * 0.5); 
+                shadow.style.transform = `scale(${shadowScale})`;
+            } else {
+                shadow.style.opacity = 0; // Oculta arriba
+            }
+
+            // 3. Actualización de textos numéricos
+            timeSpan.innerText = currentT.toFixed(2);
+            posSpan.innerText = currentY.toFixed(2);
+            velSpan.innerText = currentV.toFixed(2);
+        }
+
+        // Bucle principal de animación (se ejecuta aprox 60 veces por segundo)
+        function animate(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const deltaTime = (timestamp - lastTimestamp) / 1000; // segundos reales
+            lastTimestamp = timestamp;
+
+            // Tiempo ajustado por el factor de velocidad de simulación
+            const simDeltaTime = deltaTime * simSpeedFactor;
+
+            // --- CÁLCULO FÍSICO (MRUV Vertical, v0=0, y0=0) ---
+            currentT += simDeltaTime;
+            
+            // v = g * t
+            currentV = g * currentT; 
+            
+            // y = 1/2 * g * t^2
+            currentY = 0.5 * g * Math.pow(currentT, 2);
+
+            // --- Condición de parada (Toque el suelo) ---
+            if (currentY >= maxHeightPhys) {
+                // Forzamos valores finales exactos para el impacto
+                currentY = maxHeightPhys;
+                // v_final = raíz(2 * g * h)
+                currentV = Math.sqrt(2 * g * maxHeightPhys); 
+                // t_final = raíz(2 * h / g)
+                currentT = Math.sqrt((2 * maxHeightPhys) / g);
+                
+                updateDisplay();
+                isRunning = false;
+                lastTimestamp = 0;
+                return; // Detiene el bucle
+            }
+
+            updateDisplay();
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // --- Controles ---
+        function startSimulation() {
+            if (isRunning) return; // Evita múltiples clics
+            
+            // Si ya impactó, resetea automáticamente antes de soltar de nuevo
+            if (currentY >= maxHeightPhys) {
+                resetSimulation();
+            }
+            
+            isRunning = true;
+            lastTimestamp = 0;
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function resetSimulation() {
+            cancelAnimationFrame(animationId);
+            isRunning = false;
+            lastTimestamp = 0;
+            
+            // Volver a estado inicial (t=0, y=0, v=0)
+            currentT = 0;
+            currentV = 0;
+            currentY = 0;
+            
+            updateDisplay();
+        }
+
+        // Inicializar la vista en estado de reposo al cargar
+        updateDisplay();
+
+    </script>
+</body>
+</html>
