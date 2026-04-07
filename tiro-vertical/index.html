@@ -185,11 +185,11 @@
             box-shadow: 0 4px 0 #0f1e2e;
         }
 
-        /* BOTONES AHORA ARRIBA, JUSTO DESPUÉS DEL BADGE */
+        /* BOTONES ARRIBA */
         .btn-group {
             display: flex;
             gap: 12px;
-            margin-bottom: 24px;  /* separa de las tarjetas */
+            margin-bottom: 24px;
         }
         button {
             flex: 1;
@@ -289,14 +289,24 @@
             📐 Sistema de referencia: <br> <span style="font-family: monospace;">y = 0 en el suelo</span>
         </div>
 
-        <!-- BOTONES AQUÍ, ARRIBA Y CÓMODOS -->
+        <!-- BOTONES AQUÍ -->
         <div class="btn-group">
             <button id="lanzarBtn">🚀 LANZAR (v₀ = 40 m/s)</button>
             <button class="reset-btn" id="resetBtn">⟲ RESET</button>
         </div>
 
+        <!-- TARJETA DE VELOCIDAD (INICIAL / ACTUAL) -->
+        <div class="card" style="border-left: 8px solid #f39c12;">
+            <small>⚡ Velocidad</small>
+            <span class="value" id="velDisplay">40.00 m/s</span>
+            <div style="font-size: 0.9rem; margin-top: 8px;">
+                <span id="velInicialLabel">Inicial: 40.00 m/s</span> · 
+                <span id="velFinalLabel">Final: 0.00 m/s</span>
+            </div>
+        </div>
+
         <div class="card" style="border-left: 8px solid #2ecc71;">
-            <small>⚡ Posición inicial (y₀)</small>
+            <small>📍 Posición inicial (y₀)</small>
             <span class="value">0.00 m</span>
             <div style="font-size: 0.9rem; margin-top: 8px;">La pelota parte del suelo (y=0)</div>
         </div>
@@ -308,7 +318,7 @@
         </div>
 
         <div class="card">
-            <small>📍 Altura actual (y)</small>
+            <small>📏 Altura actual (y)</small>
             <span class="value" id="yDisplay">0.00 m</span>
         </div>
 
@@ -317,7 +327,8 @@
             • Al lanzar, la pelota sube → <strong>y aumenta</strong>.<br>
             • La altura máxima es <strong>y_final > 0</strong>.<br>
             • <strong>La posición inicial es 0 m</strong>.<br>
-            • ¡La simulación se detiene justo en la cima!
+            • ¡La simulación se detiene justo en la cima!<br>
+            • <strong>La velocidad disminuye de 40 m/s a 0 m/s.</strong>
         </div>
 
         <div class="reference-note">
@@ -355,20 +366,27 @@
         // Elementos DOM
         const ball = document.getElementById('ball');
         const yDisplay = document.getElementById('yDisplay');
+        const velDisplay = document.getElementById('velDisplay');
         const maxHeightMarker = document.getElementById('maxHeightMarker');
         const maxHeightLabel = document.getElementById('maxHeightLabel');
         const lanzarBtn = document.getElementById('lanzarBtn');
         const resetBtn = document.getElementById('resetBtn');
 
-        // Actualizar posición visual y datos
+        // Actualizar posición visual, velocidad y datos
         function updateDisplay() {
+            // Posición de la pelota
             let bottomPx = y * PX_PER_METER;
             if (bottomPx > 520 - 40) bottomPx = 520 - 40;
             if (bottomPx < 0) bottomPx = 0;
             ball.style.bottom = bottomPx + 'px';
             
+            // Altura actual
             yDisplay.innerText = y.toFixed(2) + ' m';
             
+            // Velocidad actual (con signo positivo hacia arriba)
+            velDisplay.innerText = v.toFixed(2) + ' m/s';
+            
+            // Marcador de altura máxima
             if (maxHeightReached > 0.01) {
                 const markerBottom = maxHeightReached * PX_PER_METER;
                 maxHeightMarker.style.display = 'flex';
@@ -390,16 +408,17 @@
             }
             
             let delta = (timestamp - lastTimestamp) / 1000;
-            if (delta > 0.1) delta = 0.016;
+            if (delta > 0.1) delta = 0.016;  // evitar saltos grandes
             
             t += delta;
             v = V0 + G * t;
             y = V0 * t + 0.5 * G * t * t;
             
+            // Condición de parada: velocidad <= 0 o tiempo máximo alcanzado
             if (v <= 0 || t >= T_MAX) {
                 t = T_MAX;
                 y = Y_MAX_TEORICA;
-                v = 0;
+                v = 0.0;
                 maxHeightReached = y;
                 updateDisplay();
                 
@@ -436,7 +455,7 @@
             lanzarBtn.disabled = true;
             maxHeightMarker.style.display = 'none';
             
-            updateDisplay();
+            updateDisplay();  // muestra velocidad inicial = 40
             
             animFrame = requestAnimationFrame(animationStep);
         }
@@ -462,6 +481,7 @@
         lanzarBtn.addEventListener('click', iniciarLanzamiento);
         resetBtn.addEventListener('click', resetear);
 
+        // Inicializar correctamente la velocidad mostrada
         resetear();
     })();
 </script>
