@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiro Vertical · El "Ajá" del Sistema de Referencia</title>
+    <title>Tiro Vertical · Se detiene en la cima (Ajá!)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -28,16 +28,15 @@
             display: flex;
             gap: 30px;
             background: var(--card-bg);
-            padding: 30px 30px 30px 30px;
+            padding: 30px;
             border-radius: 32px;
             box-shadow: 0 20px 40px rgba(0, 20, 40, 0.2);
             flex-wrap: wrap;
             justify-content: center;
             border: 1px solid rgba(255,255,255,0.6);
-            backdrop-filter: blur(2px);
         }
 
-        /* ZONA DE DIBUJO + EJE CARTESIANO EXPLÍCITO */
+        /* ZONA DE DIBUJO + EJE CARTESIANO */
         .canvas-wrapper {
             display: flex;
             flex-direction: column;
@@ -57,10 +56,9 @@
             overflow: visible;
         }
 
-        /* EJE Y (eje de posiciones) bien marcado */
         .eje-y {
             position: absolute;
-            left: 50px;          /* margen izquierdo para ver el cero */
+            left: 50px;
             top: 15px;
             bottom: 0;
             width: 4px;
@@ -69,7 +67,6 @@
             box-shadow: 0 0 6px rgba(0,0,0,0.2);
             z-index: 5;
         }
-        /* Flecha superior del eje Y */
         .eje-y::before {
             content: '';
             position: absolute;
@@ -79,7 +76,6 @@
             border-right: 7px solid transparent;
             border-bottom: 14px solid var(--primary);
         }
-        /* Texto "+y" en la punta de la flecha */
         .eje-y .y-pos-label {
             position: absolute;
             top: -32px;
@@ -92,7 +88,6 @@
             padding: 2px 6px;
             border-radius: 20px;
         }
-        /* Origen (y=0) con línea de suelo */
         .origen-marker {
             position: absolute;
             bottom: 0;
@@ -122,29 +117,26 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
-        /* Pelota */
         .ball {
             width: 34px;
             height: 34px;
             background: radial-gradient(circle at 30% 30%, #ffd966, #e67e22, #b6490e);
             border-radius: 50%;
             position: absolute;
-            left: 105px;         /* centrada respecto al área, pero al lado del eje para comparar */
+            left: 105px;
             bottom: 0;
             z-index: 20;
             box-shadow: 0 6px 8px rgba(0,0,0,0.25), inset -4px -4px 8px rgba(0,0,0,0.2);
             border: 2px solid #f1c40f;
-            transition: box-shadow 0.1s;
             will-change: bottom;
         }
 
-        /* Altura máxima indicador visual (solo aparece cuando se alcanza) */
+        /* Marcador de altura máxima */
         .altura-max-marker {
             position: absolute;
             left: 40px;
             width: 180px;
             height: 2px;
-            background: transparent;
             border-top: 3px dashed #e74c3c;
             z-index: 8;
             display: none;
@@ -221,9 +213,6 @@
             margin: 20px 0 16px;
             font-size: 0.95rem;
         }
-        .explain strong {
-            color: #145a32;
-        }
         .btn-group {
             display: flex;
             gap: 12px;
@@ -240,7 +229,7 @@
             background: var(--accent-up);
             color: white;
             box-shadow: 0 6px 0 #1e7e4a, 0 4px 8px rgba(0,0,0,0.1);
-            transition: all 0.05s ease-in;
+            transition: all 0.05s;
             border: 1px solid #a3e0b0;
         }
         button.reset-btn {
@@ -251,6 +240,12 @@
         button:active {
             transform: translateY(4px);
             box-shadow: 0 2px 0 #1e7e4a, 0 2px 6px rgba(0,0,0,0.1);
+        }
+        button:disabled {
+            opacity: 0.6;
+            transform: none;
+            box-shadow: 0 4px 0 #1e7e4a;
+            cursor: not-allowed;
         }
         .reference-note {
             margin-top: 22px;
@@ -265,31 +260,25 @@
 <body>
 
 <div class="main-container">
-    <!-- LADO IZQUIERDO: DIBUJO CON EJE CARTESIANO INTEGRADO -->
+    <!-- LADO IZQUIERDO: DIBUJO -->
     <div class="canvas-wrapper">
         <div class="sim-area" id="simArea">
-            <!-- Eje Y con origen bien visible -->
             <div class="eje-y">
                 <span class="y-pos-label">+y ↑</span>
             </div>
-            <!-- Indicador de origen (y=0) sobre el suelo -->
             <div class="origen-marker"></div>
             <span class="y-zero-text">y₀ = 0 m</span>
-
-            <!-- Pelota -->
             <div class="ball" id="ball"></div>
-
-            <!-- Marcador dinámico de altura máxima (se muestra cuando alcanza el pico) -->
             <div class="altura-max-marker" id="maxHeightMarker">
                 <span id="maxHeightLabel">y_max = 0.00 m</span>
             </div>
         </div>
         <div style="margin-top: 12px; font-weight: 500; color: #1e3c72; background: #e2eaf8; padding: 6px 18px; border-radius: 40px;">
-            ⬤ Origen en el suelo · El eje +y apunta hacia arriba
+            ⬤ Origen en el suelo · Eje +y hacia arriba
         </div>
     </div>
 
-    <!-- PANEL DERECHO: EXPLICACIÓN + VALORES -->
+    <!-- PANEL DERECHO -->
     <div class="panel">
         <h3>⏫ Tiro vertical</h3>
         <div class="sistema-badge">
@@ -299,13 +288,13 @@
         <div class="card" style="border-left: 8px solid #2ecc71;">
             <small>⚡ Posición inicial (y₀)</small>
             <span class="value">0.00 m</span>
-            <div style="font-size: 0.9rem; margin-top: 8px; color: #2c3e50;">→ La pelota parte del suelo</div>
+            <div style="font-size: 0.9rem; margin-top: 8px;">La pelota parte del suelo (y=0)</div>
         </div>
 
         <div class="card" style="border-left: 8px solid #e74c3c;">
             <small>🌍 Gravedad (g)</small>
             <span class="value">-9.81 m/s²</span>
-            <div style="font-size: 0.9rem; margin-top: 6px;">Negativa porque apunta hacia –y (abajo).</div>
+            <div style="font-size: 0.9rem; margin-top: 6px;">Negativa porque apunta hacia –y</div>
         </div>
 
         <div class="card">
@@ -314,11 +303,11 @@
         </div>
 
         <div class="explain">
-            <strong>✨ "Ajá!" visual:</strong> El eje Y está dibujado con origen en el suelo.<br>
+            <strong>✨ ¡Ajá! visual:</strong> El eje Y está fijo en el suelo.<br>
             • Al lanzar, la pelota sube → <strong>y aumenta</strong>.<br>
-            • La altura máxima es <strong>y_final</strong> (positiva).<br>
-            • <strong>La posición inicial es 0 m</strong> porque ahí empieza.<br>
-            • ¡La pelota se detiene exactamente arriba! 
+            • La altura máxima es <strong>y_final > 0</strong>.<br>
+            • <strong>La posición inicial es 0 m</strong>.<br>
+            • ¡La simulación se detiene justo en la cima!
         </div>
 
         <div class="btn-group">
@@ -332,7 +321,7 @@
             Aquí el eje está abajo → <strong>tiro vertical: y₀ = 0, y_max > 0.</strong> ¡Compáralo con el dibujo!
         </div>
         <div style="font-size:0.85rem; text-align:center; margin-top:18px; opacity:0.8;">
-            ⏸️ La simulación se detiene en la altura máxima.
+            ⏸️ La animación se detiene automáticamente en la altura máxima.
         </div>
     </div>
 </div>
@@ -342,46 +331,42 @@
         "use strict";
 
         // Constantes físicas
-        const V0 = 40.0;            // m/s
-        const G = -9.81;            // m/s² (negativa, apunta hacia abajo)
+        const V0 = 40.0;                // m/s
+        const G = -9.81;                // m/s² (negativa)
+        const PX_PER_METER = 4.0;       // escala visual (4px = 1m)
         
         // Variables de estado
-        let t = 0.0;                // tiempo transcurrido (s)
-        let y = 0.0;               // posición actual (m)
-        let v = V0;               // velocidad instantánea (m/s)
+        let t = 0.0;                    // tiempo actual (s)
+        let y = 0.0;                   // posición (m)
+        let v = V0;                    // velocidad (m/s)
         let animFrame = null;
         let animActive = false;
-        let maxHeightReached = 0.0; // para mostrar el marcador
+        let maxHeightReached = 0.0;
         
-        // Elementos del DOM
+        // Tiempo exacto en que se alcanza la altura máxima (v = 0)
+        const T_MAX = V0 / Math.abs(G);      // ≈ 4.077 s
+        const Y_MAX_TEORICA = (V0 * V0) / (2 * Math.abs(G)); // ≈ 81.55 m
+
+        // Elementos DOM
         const ball = document.getElementById('ball');
         const yDisplay = document.getElementById('yDisplay');
         const maxHeightMarker = document.getElementById('maxHeightMarker');
         const maxHeightLabel = document.getElementById('maxHeightLabel');
-        const simArea = document.getElementById('simArea');
-        
-        // Factor de escala: pixeles por metro (ajustado para que 80m ≈ 320px aprox)
-        const PX_PER_METER = 4.0;    // 4px por metro -> altura máxima ~81.5m *4 ≈ 326px (cabe en 520px)
-        
-        // Altura máxima teórica: v0^2/(2|g|) = 1600/(19.62) ≈ 81.55 m
-        const Y_MAX_TEORICA = (V0 * V0) / (2 * Math.abs(G));  // ~81.55 m
-        
-        // Referencia del área para límite visual
-        const AREA_HEIGHT = 520;      // px
-        
-        // Función para actualizar posición visual de la pelota (bottom en px)
-        function updateBallPosition() {
-            // bottom = y * PX_PER_METER   (y en metros)
+        const lanzarBtn = document.getElementById('lanzarBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Actualizar posición visual y datos
+        function updateDisplay() {
+            // Posición de la pelota (bottom en px)
             let bottomPx = y * PX_PER_METER;
-            // Limitar a no pasarse del área (aunque la física ya para antes)
-            if (bottomPx > AREA_HEIGHT - 40) bottomPx = AREA_HEIGHT - 40; 
+            // Limitar para que no se salga del área (por seguridad)
+            if (bottomPx > 520 - 40) bottomPx = 520 - 40;
             if (bottomPx < 0) bottomPx = 0;
             ball.style.bottom = bottomPx + 'px';
             
-            // Actualizar display numérico
             yDisplay.innerText = y.toFixed(2) + ' m';
             
-            // Actualizar marcador de altura máxima si corresponde
+            // Actualizar marcador de altura máxima
             if (maxHeightReached > 0.01) {
                 const markerBottom = maxHeightReached * PX_PER_METER;
                 maxHeightMarker.style.display = 'flex';
@@ -391,10 +376,115 @@
                 maxHeightMarker.style.display = 'none';
             }
         }
-        
-        // Función que resetea todo a condiciones iniciales
-        function resetSimulation(keepMarkerHidden = true) {
-            // Cancelar animación en curso
+
+        // Función de animación (usando requestAnimationFrame con delta de tiempo)
+        let lastTimestamp = null;
+        function animationStep(timestamp) {
+            if (!animActive) return;
+            
+            if (lastTimestamp === null) {
+                lastTimestamp = timestamp;
+                animFrame = requestAnimationFrame(animationStep);
+                return;
+            }
+            
+            // Calcular delta tiempo en segundos (limitado para evitar saltos)
+            let delta = (timestamp - lastTimestamp) / 1000; // convertir ms a s
+            if (delta > 0.1) delta = 0.016; // ~60fps si hay pausa larga
+            
+            // Avanzar tiempo
+            t += delta;
+            
+            // Calcular nueva velocidad y posición
+            v = V0 + G * t;
+            y = V0 * t + 0.5 * G * t * t;
+            
+            // Verificar si hemos alcanzado o superado el punto más alto (v ≤ 0)
+            // También podemos usar t >= T_MAX, pero por precisión usamos v.
+            if (v <= 0 || t >= T_MAX) {
+                // Ajustar exactamente al punto máximo
+                t = T_MAX;
+                y = Y_MAX_TEORICA;
+                v = 0;
+                maxHeightReached = y;
+                updateDisplay();
+                
+                // Detener animación
+                animActive = false;
+                lanzarBtn.disabled = false;
+                if (animFrame) {
+                    cancelAnimationFrame(animFrame);
+                    animFrame = null;
+                }
+                lastTimestamp = null;
+                return;
+            }
+            
+            // Actualizar altura máxima alcanzada (para el marcador)
+            if (y > maxHeightReached) {
+                maxHeightReached = y;
+            }
+            
+            updateDisplay();
+            
+            lastTimestamp = timestamp;
+            animFrame = requestAnimationFrame(animationStep);
+        }
+
+        // Iniciar lanzamiento
+        function iniciarLanzamiento() {
+            if (animActive) return; // ya está en marcha
+            
+            // Resetear estado (pero sin tocar la posición visual todavía)
+            t = 0.0;
+            y = 0.0;
+            v = V0;
+            maxHeightReached = 0.0;
+            animActive = true;
+            lastTimestamp = null;
+            
+            // Deshabilitar botón de lanzar mientras corre
+            lanzarBtn.disabled = true;
+            
+            // Ocultar marcador previo
+            maxHeightMarker.style.display = 'none';
+            
+            // Posicionar pelota en origen
+            updateDisplay();
+            
+            // Iniciar loop de animación
+            animFrame = requestAnimationFrame(animationStep);
+        }
+
+        // Reset completo (detener y volver al suelo)
+        function resetear() {
+            // Detener animación si está corriendo
             if (animFrame) {
                 cancelAnimationFrame(animFrame);
-                animFrame
+                animFrame = null;
+            }
+            animActive = false;
+            lanzarBtn.disabled = false;
+            lastTimestamp = null;
+            
+            // Valores iniciales
+            t = 0.0;
+            y = 0.0;
+            v = V0;
+            maxHeightReached = 0.0;
+            
+            // Actualizar display
+            updateDisplay();
+            maxHeightMarker.style.display = 'none';
+        }
+
+        // Asignar eventos
+        lanzarBtn.addEventListener('click', iniciarLanzamiento);
+        resetBtn.addEventListener('click', resetear);
+
+        // Inicializar posición
+        resetear();
+    })();
+</script>
+</body>
+</html>
